@@ -60,6 +60,7 @@ This project is licensed under the **MIT License** - See the [LICENSE](LICENSE) 
 
 ## 💬 Contact
 👤 **Uday Bhoyar**  
-Email:-ubhoyar12@gmail.com
+Email:-ubhoyar12@gmail.com.
+
 _Enjoy playing the game! 🐍🎮_
 
