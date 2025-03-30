@@ -11,7 +11,8 @@ public class GamePanel extends JPanel implements ActionListener {
     static final int SCREEN_HEIGHT = 600;
     static final int UNIT_SIZE = 25;
     static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / (UNIT_SIZE * UNIT_SIZE);
-    static final int DELAY = 180; // Increased delay to slow down the snake
+    static final int DELAY = 300; // Adjusted delay for better playability
+
     final int x[] = new int[GAME_UNITS];
     final int y[] = new int[GAME_UNITS];
     int bodyParts;
@@ -39,7 +40,7 @@ public class GamePanel extends JPanel implements ActionListener {
         running = true;
         newApple();
 
-        // Ensure all body parts start from the center to prevent green dot issue
+        // Start snake in the center
         int startX = SCREEN_WIDTH / 2;
         int startY = SCREEN_HEIGHT / 2;
         for (int i = 0; i < bodyParts; i++) {
@@ -62,17 +63,8 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void draw(Graphics g) {
         if (running) {
-            // Draw background
-            g.setColor(new Color(50, 50, 50));
-            g.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-
-            // Draw apple
             drawApple(g);
-
-            // Draw snake
             drawSnake(g);
-
-            // Draw score
             drawScore(g);
         } else {
             gameOver(g);
@@ -83,7 +75,7 @@ public class GamePanel extends JPanel implements ActionListener {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Draw shadow
+        // Draw apple shadow
         g2d.setColor(new Color(0, 0, 0, 100));
         g2d.fillOval(appleX + 5, appleY + 5, UNIT_SIZE, UNIT_SIZE);
 
@@ -99,12 +91,10 @@ public class GamePanel extends JPanel implements ActionListener {
 
         for (int i = 0; i < bodyParts; i++) {
             if (i == 0) {
-                // Draw head with gradient
-                GradientPaint gradient = new GradientPaint(x[i], y[i], Color.green, x[i] + UNIT_SIZE, y[i] + UNIT_SIZE, new Color(0, 100, 0));
+                GradientPaint gradient = new GradientPaint(x[i], y[i], Color.black, x[i] + UNIT_SIZE, y[i] + UNIT_SIZE, new Color(0, 100, 0));
                 g2d.setPaint(gradient);
                 g2d.fillRoundRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE, 10, 10);
             } else {
-                // Draw body with gradient
                 GradientPaint gradient = new GradientPaint(x[i], y[i], new Color(45, 180, 0), x[i] + UNIT_SIZE, y[i] + UNIT_SIZE, new Color(0, 100, 0));
                 g2d.setPaint(gradient);
                 g2d.fillRoundRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE, 10, 10);
@@ -120,8 +110,20 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void newApple() {
-        appleX = random.nextInt((int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE;
-        appleY = random.nextInt((int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE;
+        boolean validPosition;
+        do {
+            validPosition = true;
+            appleX = random.nextInt((SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE;
+            appleY = random.nextInt((SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE;
+            
+            // Ensure apple does not spawn inside the snake's body
+            for (int i = 0; i < bodyParts; i++) {
+                if (appleX == x[i] && appleY == y[i]) {
+                    validPosition = false;
+                    break;
+                }
+            }
+        } while (!validPosition);
     }
 
     public void move() {
@@ -147,12 +149,12 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void checkCollisions() {
-        for (int i = bodyParts; i > 0; i--) {
+        for (int i = bodyParts - 1; i > 0; i--) {  // Avoid checking head against itself
             if ((x[0] == x[i]) && (y[0] == y[i])) {
                 running = false;
             }
         }
-        if (x[0] < 0 || x[0] >= SCREEN_WIDTH || y[0] < 0 || y[0] >= SCREEN_HEIGHT) {
+        if (x[0] < 0 || x[0] > SCREEN_WIDTH - UNIT_SIZE || y[0] < 0 || y[0] > SCREEN_HEIGHT - UNIT_SIZE) {
             running = false;
         }
         if (!running) {
@@ -189,24 +191,17 @@ public class GamePanel extends JPanel implements ActionListener {
         @Override
         public void keyPressed(KeyEvent e) {
             switch (e.getKeyCode()) {
-                case KeyEvent.VK_LEFT:
-                    if (direction != 'R') direction = 'L';
-                    break;
-                case KeyEvent.VK_RIGHT:
-                    if (direction != 'L') direction = 'R';
-                    break;
-                case KeyEvent.VK_UP:
-                    if (direction != 'D') direction = 'U';
-                    break;
-                case KeyEvent.VK_DOWN:
-                    if (direction != 'U') direction = 'D';
-                    break;
-                case KeyEvent.VK_ENTER:
-                    if (!running) {
-                        startGame();
-                        repaint();
-                    }
-                    break;
+                case KeyEvent.VK_LEFT: if (direction != 'R') direction = 'L'; break;
+                case KeyEvent.VK_RIGHT: if (direction != 'L') direction = 'R'; break;
+                case KeyEvent.VK_UP: if (direction != 'D') direction = 'U'; break;
+                case KeyEvent.VK_DOWN: if (direction != 'U') direction = 'D'; break;
+            }
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER && !running) {
+                startGame();
             }
         }
     }
